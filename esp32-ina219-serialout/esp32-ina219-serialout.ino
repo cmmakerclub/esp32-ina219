@@ -12,8 +12,11 @@ float current_mA = 0;
 float loadvoltage = 0;
 float power_mW = 0;
 uint32_t pevTime = 0;
+uint32_t sum = 0;
+uint32_t average = 0;
+int count = 0;
 
-void getSensor(int rate) {
+void getSensor(int rate, int sampling) {
   uint32_t curTime = millis();
 
   if (curTime - pevTime > rate * 1000) {
@@ -24,11 +27,20 @@ void getSensor(int rate) {
     power_mW = ina219.getPower_mW();
     loadvoltage = busvoltage + (shuntvoltage / 1000);
 
-    Serial.print("Bus Voltage:   "); Serial.print(busvoltage); Serial.println(" V");
-    Serial.print("Shunt Voltage: "); Serial.print(shuntvoltage); Serial.println(" mV");
-    Serial.print("Load Voltage:  "); Serial.print(loadvoltage); Serial.println(" V");
-    Serial.print("Current:       "); Serial.print(current_mA); Serial.println(" mA");
-    Serial.print("Power:         "); Serial.print(power_mW); Serial.println(" mW");
+    sum += power_mW;
+    count += 1;
+    if (count == sampling) {
+      average = sum / sampling;
+      count = 0;
+      sum = 0;
+    }
+
+    Serial.print("Bus Voltage   : "); Serial.print(busvoltage); Serial.println(" V");
+    Serial.print("Shunt Voltage : "); Serial.print(shuntvoltage); Serial.println(" mV");
+    Serial.print("Load Voltage  : "); Serial.print(loadvoltage); Serial.println(" V");
+    Serial.print("Current       : "); Serial.print(current_mA); Serial.println(" mA");
+    Serial.print("Power         : "); Serial.print(power_mW); Serial.println(" mW");
+    Serial.print("Power average : "); Serial.print(average); Serial.println(" mW");
     Serial.print("\n");
 
     Serial1.print("V,");
@@ -54,5 +66,5 @@ void setup(void)
 
 void loop(void)
 {
-  getSensor(5); // get data every 5 secound
+  getSensor(1, 10); // get data every 1 secound and 10 power sampling
 }
