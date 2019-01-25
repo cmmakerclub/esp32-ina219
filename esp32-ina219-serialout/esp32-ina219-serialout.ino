@@ -6,53 +6,17 @@ Adafruit_INA219 ina219(0x41);
 
 HardwareSerial Serial1(2); // RX2(16)  TX2(17)
 
-float shuntvoltage = 0;
-float busvoltage = 0;
-float current_mA = 0;
-float loadvoltage = 0;
-float power_mW = 0;
-uint32_t pevTime = 0;
-uint32_t sum = 0;
-uint32_t average = 0;
-int count = 0;
-
-void getSensor(int rate, int sampling) {
-  uint32_t curTime = millis();
-
-  if (curTime - pevTime > rate * 1000) {
-    pevTime = curTime;
-    shuntvoltage = ina219.getShuntVoltage_mV();
-    busvoltage = ina219.getBusVoltage_V();
-    current_mA = ina219.getCurrent_mA();
-    power_mW = ina219.getPower_mW();
-    loadvoltage = busvoltage + (shuntvoltage / 1000);
-
-    sum += power_mW;
-    count += 1;
-    if (count == sampling) {
-      average = sum / sampling;
-      count = 0;
-      sum = 0;
-    }
-
-    Serial.print("Bus Voltage   : "); Serial.print(busvoltage); Serial.println(" V");
-    Serial.print("Shunt Voltage : "); Serial.print(shuntvoltage); Serial.println(" mV");
-    Serial.print("Load Voltage  : "); Serial.print(loadvoltage); Serial.println(" V");
-    Serial.print("Current       : "); Serial.print(current_mA); Serial.println(" mA");
-    Serial.print("Power         : "); Serial.print(power_mW); Serial.println(" mW");
-    Serial.print("Power average : "); Serial.print(average); Serial.println(" mW");
-    Serial.print("\n");
-
-    Serial1.print("V,");
-    Serial1.print(busvoltage);
-    Serial1.print(",C,");
-    Serial1.print(current_mA);
-    Serial1.print(",P,");
-    Serial1.print(power_mW);
-    Serial.print("\n");
-  }
-
-}
+float shuntvoltage, busvoltage, loadvoltage;
+double current_mA, current_A, sumCurrent;
+float power_mW = 0, power_W = 0, energy = 0;
+float ampHours = 0.0, wattHours = 0.0;
+uint32_t pevTime = 0, msec = 0, time;
+uint32_t energyConsumed = 0;
+uint32_t powerCountt = 0;
+double powerSum = 0;
+double powerAverage = 0;
+double powerHour = 0;
+uint32_t pevPrint = 0;
 
 void setup(void)
 {
@@ -66,5 +30,33 @@ void setup(void)
 
 void loop(void)
 {
-  getSensor(1, 10); // get data every 1 secound and 10 power sampling
+  uint32_t curTime = millis();
+  if (curTime - pevTime > 1) {
+    pevTime = curTime;
+    shuntvoltage = ina219.getShuntVoltage_mV();
+    busvoltage = ina219.getBusVoltage_V();
+    current_mA = ina219.getCurrent_mA();
+    power_mW = ina219.getPower_mW();
+    powerSum += power_mW * 0.001; // อ่านค่า power mWS
+    powerCountt++; // count / mS
+  }
+
+  if (curTime - pevPrint > 1000) {
+    pevPrint = curTime;
+
+    Serial.print("Voltage     : "); Serial.print(busvoltage); Serial.println(" V");
+    Serial.print("Current mA  : "); Serial.print(current_mA); Serial.println(" mA");
+    Serial.print("Power mW    : "); Serial.print(power_mW);   Serial.println(" mW");
+    Serial.print("Power sum   : "); Serial.println(powerSum); Serial.println(" mWS");
+
+    powerAverage = powerSum / powerCountt; // W / mS
+    Serial.print("Power ave   : "); Serial.println(powerAverage); Serial.println(" W");
+
+    powerHour =  powerAverage * 3600;
+    Serial.print("Power Hour  : "); Serial.print(powerHour);   Serial.print(" mWH");   
+
+    Serial.println("  ");
+    Serial.println("  ");
+    powerCountt = 0;
+  }
 }
