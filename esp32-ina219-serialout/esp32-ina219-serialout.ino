@@ -20,7 +20,7 @@ void setup(void)
   Wire.begin(21, 22);
 
   Serial.begin(115200);
-  Serial1.begin(115200, SERIAL_8N1, 16 /*rx*/, 17 /* tx */);
+  Serial1.begin(9600, SERIAL_8N1, 16 /*rx*/, 17 /* tx */);
 
   // init ina219
   ina219.begin();
@@ -57,39 +57,24 @@ void loop(void)
     powerAverage = powerAverage * 3600;
     Serial.print("Power ave   : "); Serial.print(powerAverage, 6); Serial.println(" mWH");
 
+    powerWattHour +=  powerAverage / 1000.0000; // convert to watt-hour
+    Serial.print("Energy      : "); Serial.print(powerWattHour);   Serial.println(" WH");
 
-
-
-
-
-
-
-
-
-    //    powerAverage = powerSum / powerCount; // mWS / mS
-    //    Serial.print("Power ave   : "); Serial.print(powerAverage, 6); Serial.println(" mWH");
-    //
-    //    powerHour =  powerAverage * 3600.00; // convert to milli-watt-hour
-    //    Serial.print("Power Hour  : "); Serial.print(powerHour, 6);   Serial.println(" mWH");
-
-    //    powerWattHour =  powerHour / 1000.00; // convert to watt-hour
-    //    Serial.print("Power Wh    : "); Serial.print(powerWattHour);   Serial.println(" WH");
-
-    //    powerKilosWattHour =  powerWattHour / 1000; // convert to kilo-watt-hour
-    //    Serial.print("Power kWh   : "); Serial.print(powerKilosWattHour);   Serial.println(" kWH");
-
+    powerKilosWattHour =  powerWattHour / 1000; // convert to kilo-watt-hour
+    Serial.print("            : "); Serial.print(powerKilosWattHour);   Serial.println(" kWH");
     Serial.println("  ");
     Serial.println("  ");
 
-    //    powerSum = 0;
-    //    powerCount = 0;  // clear count sum watts
 
-    Serial1.print("Volt=");
-    Serial1.print(busvoltage);
-    Serial1.print(",Current=");
-    Serial1.print(current_mA);
-    Serial1.print(",Power=");
-    Serial1.print(powerWattHour);
-    Serial1.print("\n");
+    Serial1.print("+V=" + String(busvoltage) + ",C=" + String(current_mA) + ",P=" + String(powerAverage) + "#");
+
+    //    Serial1.print("+V=");
+    //    Serial1.print(busvoltage);
+    //    Serial1.print(",C=");
+    //    Serial1.print(current_mA);
+    //    Serial1.print(",P=");
+    //    Serial1.print(String(powerAverage));
+    //    Serial1.println("#");
+
   }
 }
